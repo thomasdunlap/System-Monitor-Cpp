@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include <string>
 #include <vector>
-
+#include <iostream>
+#include <unordered_map>
 #include "linux_parser.h"
 
 using std::stof;
@@ -35,13 +36,13 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, kernel;
+  string os, version, kernel;
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
-    linestream >> os >> kernel;
+    linestream >> os >> version >> kernel;
   }
   return kernel;
 }
@@ -59,6 +60,7 @@ vector<int> LinuxParser::Pids() {
       if (std::all_of(filename.begin(), filename.end(), isdigit)) {
         int pid = stoi(filename);
         pids.push_back(pid);
+	
       }
     }
   }
@@ -66,8 +68,29 @@ vector<int> LinuxParser::Pids() {
   return pids;
 }
 
+//LinuxParser::StringHelper() {  
+//}
+
+// need to fix below.
 // TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+float LinuxParser::MemoryUtilization() { 
+  string name_memory, kb_memory, label;
+  string line;
+  std::ifstream stream(kProcDirectory + kMeminfoFilename);
+  std::unordered_map<std::string, float> mem_map;  
+  //float ret, ret1;
+  for (int i=0; i<4; i++) {
+    if (stream.is_open()) {	  
+      std::getline(stream, line);
+      std::istringstream linestream(line);
+      linestream >> name_memory >> kb_memory >> label;
+      mem_map.insert({name_memory, std::stof (kb_memory)});
+    }
+
+  }  
+  
+  return (mem_map["MemTotal:"] - mem_map["MemFree:"]) / mem_map["MemTotal:"];
+}
 
 // TODO: Read and return the system uptime
 long LinuxParser::UpTime() { return 0; }
